@@ -134,7 +134,7 @@ fun getModuleCount(): Int {
 }
 
 fun getSuperuserCount(): Int {
-    return Natives.allowList.size
+    return Natives.getSuperuserCount()
 }
 
 fun toggleModule(id: String, enable: Boolean): Boolean {
@@ -160,6 +160,24 @@ fun restoreModule(id: String): Boolean {
     val result = execKsud(cmd, true)
     Log.i(TAG, "restore module $id result: $result")
     return result
+}
+
+fun getSelinuxEnforce(): Boolean? {
+    return runCatching {
+        val out = ShellUtils.fastCmd("getenforce").trim()
+        when {
+            out.equals("Enforcing", ignoreCase = true) -> true
+            out.equals("Permissive", ignoreCase = true) -> false
+            else -> null
+        }
+    }.getOrNull()
+}
+
+fun setSelinuxEnforce(enforce: Boolean): Boolean {
+    return runCatching {
+        val valStr = if (enforce) "1" else "0"
+        ShellUtils.fastCmdResult("setenforce $valStr")
+    }.getOrDefault(false)
 }
 
 private fun processUiPrintLine(s: String?): Pair<Int, String?> {
